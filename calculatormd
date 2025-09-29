@@ -38,7 +38,7 @@ int main() {
         }
     }
     else {
-        // Обычные операции
+        // база
         size_t pos = input.find('+');
         if (pos != string::npos) {
             double a = stod(input.substr(0, pos));
@@ -61,11 +61,11 @@ int main() {
             if (b != 0) {
                 cout << a << " / " << b << " = " << a / b << endl;
             } else {
-                cout << "Ошибка: деление на ноль!" << endl;
+                cout << "Ошибка: деление на ноль" << endl;
             }
         }
         else {
-            cout << "Неизвестная операция!" << endl;
+            cout << "Неизвестная операция" << endl;
         }
     }
     
