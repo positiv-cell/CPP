@@ -1,1 +1,73 @@
 # CPP
+ #include <iostream>
+#include <cmath>
+#include <string>
+using namespace std;
+
+int main() {
+    string input;
+    
+    cout << "Простой калькулятор" << endl;
+    cout << "Примеры: 5+3, sin30, cos45, tg60, ctg30" << endl;
+    cout << "Введите выражение: ";
+    cin >> input;
+    
+    if (input.find("sin") == 0) {
+        double a = stod(input.substr(3));
+        double rad = a * 3.14159 / 180.0;
+        cout << "sin(" << a << ") = " << sin(rad) << endl;
+    }
+    else if (input.find("cos") == 0) {
+        double a = stod(input.substr(3));
+        double rad = a * 3.14159 / 180.0;
+        cout << "cos(" << a << ") = " << cos(rad) << endl;
+    }
+    else if (input.find("tg") == 0) {
+        double a = stod(input.substr(2));
+        double rad = a * 3.14159 / 180.0;
+        cout << "tg(" << a << ") = " << tan(rad) << endl;
+    }
+    else if (input.find("ctg") == 0) {
+        double a = stod(input.substr(3));
+        double rad = a * 3.14159 / 180.0;
+        double tg_val = tan(rad);
+        if (tg_val != 0) {
+            cout << "ctg(" << a << ") = " << 1.0 / tg_val << endl;
+        } else {
+            cout << "Ошибка: ctg не существует!" << endl;
+        }
+    }
+    else {
+        // Обычные операции
+        size_t pos = input.find('+');
+        if (pos != string::npos) {
+            double a = stod(input.substr(0, pos));
+            double b = stod(input.substr(pos + 1));
+            cout << a << " + " << b << " = " << a + b << endl;
+        }
+        else if ((pos = input.find('-')) != string::npos) {
+            double a = stod(input.substr(0, pos));
+            double b = stod(input.substr(pos + 1));
+            cout << a << " - " << b << " = " << a - b << endl;
+        }
+        else if ((pos = input.find('*')) != string::npos) {
+            double a = stod(input.substr(0, pos));
+            double b = stod(input.substr(pos + 1));
+            cout << a << " * " << b << " = " << a * b << endl;
+        }
+        else if ((pos = input.find('/')) != string::npos) {
+            double a = stod(input.substr(0, pos));
+            double b = stod(input.substr(pos + 1));
+            if (b != 0) {
+                cout << a << " / " << b << " = " << a / b << endl;
+            } else {
+                cout << "Ошибка: деление на ноль!" << endl;
+            }
+        }
+        else {
+            cout << "Неизвестная операция!" << endl;
+        }
+    }
+    
+    return 0;
+}
