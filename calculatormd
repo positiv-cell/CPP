@@ -7,9 +7,9 @@ using namespace std;
 int main() {
     string input;
     
-    cout << "Калькулятор" << endl;
-    cout << "Примеры: 5+3, sin30, cos45, tg60, ctg30" << endl;
-    cout << "Введите выражение: ";
+    cout << "калькулятор" << endl;
+    cout << "примеры: 5+3, sin30, cos45, tg60, ctg30" << endl;
+    cout << "введите выражение: ";
     cin >> input;
     
     if (input.find("sin") == 0) {
@@ -34,7 +34,7 @@ int main() {
         if (tg_val != 0) {
             cout << "ctg(" << a << ") = " << 1.0 / tg_val << endl;
         } else {
-            cout << "Ошибка: ctg не существует!" << endl;
+            cout << "ошибка: ctg не существует!" << endl;
         }
     }
     else {
@@ -61,11 +61,11 @@ int main() {
             if (b != 0) {
                 cout << a << " / " << b << " = " << a / b << endl;
             } else {
-                cout << "Ошибка: деление на ноль" << endl;
+                cout << "ошибка: деление на ноль" << endl;
             }
         }
         else {
-            cout << "Неизвестная операция" << endl;
+            cout << "неизвестная операция" << endl;
         }
     }
     
