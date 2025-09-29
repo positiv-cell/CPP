@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     string input;
     
-    cout << "Простой калькулятор" << endl;
+    cout << "Калькулятор" << endl;
     cout << "Примеры: 5+3, sin30, cos45, tg60, ctg30" << endl;
     cout << "Введите выражение: ";
     cin >> input;
