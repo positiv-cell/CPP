@@ -1,0 +1,48 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int N; //ввод размера массива
+    cout << "Введите количество дней для анализа: ";
+    cin >> N;
+    
+    // создам массив температур
+    double temperatures[N];
+    
+    // заполняю массив церез цикл
+    cout << "Введите температуры для каждого дня:" << endl;
+    for (int i = 0; i < N; i++) {
+        cout << "День " << (i + 1) << ": ";
+        cin >> temperatures[i]; // заполняю каждый элемент
+    }
+    
+    // вычисл средн температур
+    double sum = 0;
+    for (int i = 0; i < N; i++) {
+        sum += temperatures[i];// накопление суммы
+    }
+    double average = sum / N;//  среднее арифметическое
+    
+    //  min и max
+    double minTemp = temperatures[0];// начинаю с первого элемента
+    double maxTemp = temperatures[0];
+    for (int i = 1; i < N; i++) {
+        if (temperatures[i] < minTemp) minTemp = temperatures[i]; //Обновл минимум
+        if (temperatures[i] > maxTemp) maxTemp = temperatures[i];
+    }
+    
+    //  дни ниже средней
+    int daysBelowAverage = 0;
+    for (int i = 0; i < N; i++) {
+        if (temperatures[i] < average) daysBelowAverage++;
+    }
+    
+    //  результаты вывод
+    cout << "\nРЕЗУЛЬТАТЫ" << endl;
+    cout << "Средняя температура: " << average << "°C" << endl;
+    cout << "Минимальная: " << minTemp << "°C" << endl;
+    cout << "Максимальная: " << maxTemp << "°C" << endl;
+    cout << "Дней ниже средней: " << daysBelowAverage << endl;
+    
+    return 0;
+}
