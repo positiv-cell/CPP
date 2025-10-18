@@ -1,0 +1,75 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+struct Book {
+    string title;//название книги
+    string author;
+    int year;//год
+    double price;//цена
+};
+
+// Сортировка книг по году (пузырьковая сортировка)
+void sortBooksByYear(Book* books, int size) {
+    for (int i = 0; i < size - 1; i++) {//внешний цикл
+        for (int j = 0; j < size - i - 1; j++) {// внутр цикл
+            if (books[j].year > books[j + 1].year) {// сравн годы издания соседних книг
+                // Обмен книгами
+                Book temp = books[j];// сохр текущую книгу
+                books[j] = books[j + 1];//заменяю текущую на след
+                books[j + 1] = temp; // восстанов из временной
+            }
+        }
+    }
+}
+
+// Поиск книги по автору
+Book* findBookByAuthor(Book* books, int size, const string& author) {
+    for (int i = 0; i < size; i++) {// прохожу по всем книгам в массиве
+        if (books[i].author == author) {
+            return &books[i]; // Возвращаем указатель на найденную книгу
+        }
+    }
+    return nullptr; // Книга не найдена
+}
+
+// Вывод всех книг
+void printBooks(Book* books, int size) {// Проходим по всем книгам и выводим информацию
+    for (int i = 0; i < size; i++) {
+        cout << books[i].title << " (" << books[i].author << ", " 
+             << books[i].year << ") - $" << books[i].price << endl;
+    }
+}
+
+int main() {
+    const int SIZE = 4;// размер массива книг
+
+    Book* library = new Book[SIZE]{
+        {"Война и мир", "Толстой", 1869, 15.99},
+        {"Преступление и наказание", "Достоевский", 1866, 12.50},
+        {"Мастер и Маргарита", "Булгаков", 1967, 14.75},
+        {"1984", "Оруэлл", 1949, 10.99}
+    };
+    
+    cout << "Исходный список:" << endl;
+    printBooks(library, SIZE);
+    
+    // Сортировка
+    sortBooksByYear(library, SIZE);
+    cout << "\nПосле сортировки по году:" << endl;
+    printBooks(library, SIZE);// передаю массив и его размер
+    
+    // Поиск
+    string authorToFind = "Достоевский";
+    Book* foundBook = findBookByAuthor(library, SIZE, authorToFind);
+    
+    if (foundBook != nullptr) {
+        cout << "\nНайдена книга автора '" << authorToFind << "':" << endl;
+        cout << foundBook->title << " (" << foundBook->year << ")" << endl;
+    } else {
+        cout << "\nКниги автора '" << authorToFind << "' не найдены" << endl;
+    }
+    
+    delete[] library;// освобождаю весь массив
+    return 0;
+}
