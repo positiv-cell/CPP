@@ -1,0 +1,51 @@
+#include <iostream>
+using namespace std;
+
+struct Complex {
+    double real;// действительная часть
+    double imag;//мнимая
+};
+
+// Сложение
+Complex add(Complex a, Complex b) {
+    Complex result;
+    result.real = a.real + b.real;//склад действительные части
+    result.imag = a.imag + b.imag;//склад мнимые 
+    return result;
+}
+
+// Вычитание
+Complex subtract(Complex a, Complex b) {
+    Complex result;
+    result.real = a.real - b.real;
+    result.imag = a.imag - b.imag;
+    return result;
+}
+
+// Умножение(a+bi)(c+di) = ac + adi + bci + bdi²
+Complex multiply(Complex a, Complex b) {
+    Complex result;
+    result.real = a.real * b.real - a.imag * b.imag;
+    result.imag = a.real * b.imag + a.imag * b.real;
+    return result;
+}
+
+// Вывод
+// функция для красивого вывода комплексного числа
+void print(Complex c) {
+    cout << "(" << c.real << " + " << c.imag << "i)" << endl; 
+}
+
+int main() {
+    Complex c1 = {3.0, 2.0};  // 3 + 2i
+    Complex c2 = {1.0, 7.0};  // 1 + 7i
+    
+    cout << "c1 = "; print(c1);
+    cout << "c2 = "; print(c2);
+    
+    cout << "Сложение: "; print(add(c1, c2));
+    cout << "Вычитание: "; print(subtract(c1, c2));
+    cout << "Умножение: "; print(multiply(c1, c2));
+    
+    return 0;
+}
