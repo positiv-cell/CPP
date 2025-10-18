@@ -1,0 +1,121 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Структура для представления даты
+// Содержит три целочисленных поля: день, месяц, год
+struct Date {
+    int day;    // день 
+    int month;  // десяц 
+    int year;   // Год 
+};
+
+//структура студента
+struct Student {
+    string name;        // ФИО студента 
+    Date birthDate;     // дата рождения 
+    int grades[5];      // массив из 5 оценок по разным предметам
+    double average;     // средний балл студента 
+};
+
+// функция для вычисления среднего балла студента
+// принимает массив оценок и его размер, возвращает среднее арифметическое
+double calculateAverage(const int grades[], int size) {
+    int sum = 0;  // переменная для накопления суммы всех оценок
+    
+    // прохожу по всем оценкам и суммируем их
+    for (int i = 0; i < size; i++) {
+        sum += grades[i];  // добавл текущую оценку к общей сумме
+    }
+    
+
+    // static_cast<double> - преобразование типа для точного деления
+    return static_cast<double>(sum) / size;
+}
+
+// функция для ввода данных о студентах
+// принимает массив студентов и его размер
+void inputStudents(Student students[], int count) {
+    // цикл по всем студентам
+    for (int i = 0; i < count; i++) {
+        cout << "Студент " << i + 1 << ":" << endl;
+        
+        // ввод ФИО студента
+        cout << "  ФИО: ";
+        cin.ignore();  // очищаем буфер ввода перед чтением строки
+        
+        
+        getline(cin, students[i].name);  // читаю всю строку с пробелами
+        // getline позволяет вводить ФИО с пробелами 
+        
+        // Ввод даты рождения
+        cout << "  Дата рождения (день месяц год): ";
+        cin >> students[i].birthDate.day     // обращ к полю day вложенной структуры
+            >> students[i].birthDate.month   // обращ к полю month
+            >> students[i].birthDate.year;   // обращ к полю year
+        
+        // Ввод 5 оценок
+        cout << "  5 оценок через пробел: ";
+        for (int j = 0; j < 5; j++) {
+            cin >> students[i].grades[j];  // заплн массив оценок
+        }
+        
+        // средний балл и сохраняем в структуре
+        students[i].average = calculateAverage(students[i].grades, 5);
+        // передаю массив оценок текущего студента и его размер (5)
+    }
+}
+
+// функция для вывода информации об одном студенте
+// принимает студента по КОНСТАНТНОЙ ССЫЛКЕ для эффективности
+// const - гарантирует, что объект не будет изменен
+// & - избегаем копирования большой структуры
+void printStudent(const Student& s) {
+    //  информация в формате: ФИО (день.месяц.год) - средний балл: X.XX
+    cout << s.name << " (";                    // ФИО
+    cout << s.birthDate.day << "."             // День
+         << s.birthDate.month << "."           // Месяц  
+         << s.birthDate.year << ") - ";        // Год
+    cout << "средний балл: " << s.average << endl;  // ср балл
+}
+
+// функция для поиска и вывода студентов с высоким средним баллом (> 4.0)
+// принимает массив студентов и его размер
+void findTopStudents(const Student students[], int count) {
+    cout << "\nСтуденты с средним баллом > 4.0:" << endl;
+    bool found = false;  // флаг, указывающий, найдены ли такие студенты
+    
+    // прохожу по всем студентам
+    for (int i = 0; i < count; i++) {
+        // проверка условия: средний балл больше 4.0
+        if (students[i].average > 4.0) {
+            printStudent(students[i]);  // вывод информацию о студенте
+            found = true;  // устанавливаем флаг, что нашли хотя бы одного
+        }
+    }
+    
+    // если не нашли ни одного студента с баллом > 4.0
+    if (!found) {
+        cout << "Студентов с средним баллом > 4.0 не найдено." << endl;
+    }
+}
+
+int main() {
+    const int STUDENT_COUNT = 3;  // колич студентов для ввода
+    Student students[STUDENT_COUNT];  // создаю массив из 3 студентов
+    
+    // 1. ВВОД ДАННЫХ О СТУДЕНТАХ
+    cout << "=== ВВОД ДАННЫХ О СТУДЕНТАХ ===" << endl;
+    inputStudents(students, STUDENT_COUNT);  // вызываю функцию ввода
+    
+    // 2. ВЫВОД ВСЕХ СТУДЕНТОВ
+    cout << "\nВСЕ СТУДЕНТЫ " << endl;
+    for (int i = 0; i < STUDENT_COUNT; i++) {
+        printStudent(students[i]);  // вывожу каждого студента
+    }
+    
+    // 3. ПОИСК И ВЫВОД ЛУЧШИХ СТУДЕНТОВ
+    findTopStudents(students, STUDENT_COUNT);  // ищу студентов с баллом > 4.0
+    
+    return 0;  
+}
