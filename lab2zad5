@@ -1,0 +1,70 @@
+#include <iostream>
+#include <string>
+using namespace std;
+// cтруктура для представления книги
+struct Book {
+    string title;// название книги
+    string author;// автор книги
+    int year;// год издания
+    double price;// цена книги
+};
+
+// Функция для вывода всех книг
+void printBooks(Book* books, int size) {
+    cout << "\nКАТАЛОГ КНИГ " << endl;
+    for (int i = 0; i < size; i++) {
+        cout << "Книга " << (i + 1) << ":" << endl;
+        cout << "  Название: " << books[i].title << endl;
+        cout << "  Автор: " << books[i].author << endl;
+        cout << "  Год: " << books[i].year << endl;
+        cout << "  Цена: $" << books[i].price << endl;
+        cout << endl;
+    }
+}
+
+// Функция для поиска самой дорогой книги
+void findMostExpensive(Book* books, int size) {
+    int maxIndex = 0;
+    for (int i = 1; i < size; i++) { // ищем книгу с максимальной ценой
+        if (books[i].price > books[maxIndex].price) {
+            maxIndex = i;// обновляем индекс максимального элемента
+        }
+    }
+        // вывожу информацию о самой дорогой книге
+    cout << "Самая дорогая книга:" << endl;
+    cout << "  Название: " << books[maxIndex].title << endl;
+    cout << "  Цена: $" << books[maxIndex].price << endl;
+}
+
+int main() {
+    int N;
+    cout << "Введите количество книг: ";
+    cin >> N;
+    cin.ignore(); // очищаю буфер после ввода числа
+    
+    // динамическое выделение памяти
+    Book* library = new Book[N];
+    
+    // Заполнение массива
+    for (int i = 0; i < N; i++) {
+        cout << "\nКнига " << (i + 1) << ":" << endl;
+        cout << "  Название: ";
+        getline(cin, library[i].title);
+        cout << "  Автор: ";
+        getline(cin, library[i].author);
+        cout << "  Год издания: ";
+        cin >> library[i].year;
+        cout << "  Цена: ";
+        cin >> library[i].price;
+        cin.ignore(); // Очищаем буфер после ввода числа
+    }
+    
+    // Вызов функций
+    printBooks(library, N);// Вывод каталога
+    findMostExpensive(library, N);// Поиск самой дорогой книги
+    
+    // Освобождение памяти
+    delete[] library;// освобождаем весь массив
+    
+    return 0;
+}
