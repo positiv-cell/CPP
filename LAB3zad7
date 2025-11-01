@@ -1,0 +1,36 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+// Класс для комплексных чисел
+class Complex {
+private:
+    double real, imag;
+public:
+    Complex(double r=0,double i=0):real(r),imag(i){}
+
+    Complex operator+(const Complex&o) const {return {real+o.real,imag+o.imag};}
+    Complex operator-(const Complex&o) const {return {real-o.real,imag-o.imag};}
+    Complex operator*(const Complex&o) const {
+        return {real*o.real - imag*o.imag, real*o.imag + imag*o.real};
+    }
+    bool operator==(const Complex&o) const {return real==o.real && imag==o.imag;}
+
+    friend ostream& operator<<(ostream&os,const Complex&c){
+        return os<<c.real<<(c.imag>=0?"+":"")<<c.imag<<"i";
+    }
+    friend istream& operator>>(istream&is,Complex&c){
+        return is>>c.real>>c.imag;
+    }
+};
+
+int main(){
+    Complex a,b;
+    cout<<"Введите два комплексных числа (real imag):\n";
+    cin>>a>>b;
+
+    cout<<"a+b="<<(a+b)<<"\n";
+    cout<<"a-b="<<(a-b)<<"\n";
+    cout<<"a*b="<<(a*b)<<"\n";
+    cout<<"a==b? "<<boolalpha<<(a==b)<<"\n";
+}
