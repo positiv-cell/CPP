@@ -1,0 +1,73 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Базовый человек
+class Person {
+protected:
+    string name;
+    int age;
+public:
+    Person(string n,int a):name(n),age(a){}
+    virtual void display() const { cout<<"Имя: "<<name<<", Возраст: "<<age<<"\n"; }
+    virtual ~Person()=default;
+};
+
+// Работник
+class Employee {
+protected:
+    string position;
+    double salary;
+public:
+    Employee(string p,double s):position(p),salary(s){}
+    virtual void work() const { cout<<"Работает\n"; }
+    virtual ~Employee()=default;
+};
+
+// Учитель — человек и сотрудник
+class Teacher: public Person, public Employee {
+    string subject;
+    int exp;
+public:
+    Teacher(string n,int a,string p,double s,string subj,int e)
+     : Person(n,a), Employee(p,s), subject(subj), exp(e){}
+
+    void display() const override {
+        Person::display();
+        cout<<"Должность: "<<position<<", Предмет: "<<subject<<", Стаж: "<<exp<<"\n";
+    }
+    void work() const override { cout<<"Преподает "<<subject<<"\n"; }
+};
+
+// Исследователь
+class Researcher {
+protected:
+    string area;
+    int pubs;
+public:
+    Researcher(string a,int p):area(a),pubs(p){}
+    void conductResearch() const { cout<<"Исследует "<<area<<" ("<<pubs<<" публикаций)\n"; }
+};
+
+// Профессор — учитель + исследователь
+class Professor: public Teacher, public Researcher {
+public:
+    Professor(string n,int a,string pos,double sal,string subj,int e,string ar,int p)
+    : Teacher(n,a,pos,sal,subj,e), Researcher(ar,p){}
+    void display() const override {
+        Teacher::display();
+        cout<<"Научная область: "<<area<<", публикаций: "<<pubs<<"\n";
+    }
+};
+
+int main(){
+    Teacher t("Алексей",35,"Преподаватель",70000,"Математика",10);
+    t.display(); t.work();
+
+    cout<<"---\n";
+
+    Professor p("Ирина",50,"Профессор",120000,"Информатика",25,"ML",80);
+    p.display();
+    p.conductResearch();
+    p.work();
+}
