@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+using namespace std;
+
+// Шаблон стека
+template<typename T>
+class Stack {
+    vector<T> elements;
+    int capacity;
+public:
+    Stack(int s=10):capacity(s){}
+    void push(const T&e){
+        if(elements.size()>=capacity) throw runtime_error("Stack overflow");
+        elements.push_back(e);
+    }
+    T pop(){
+        if(elements.empty()) throw runtime_error("Stack empty");
+        T v=elements.back(); elements.pop_back(); return v;
+    }
+    T top(){
+        if(elements.empty()) throw runtime_error("Stack empty");
+        return elements.back();
+    }
+};
+
+// Шаблон очереди
+template<typename T>
+class Queue {
+    vector<T> arr;
+    int head=0, tail=0, cnt=0, cap;
+public:
+    Queue(int c=10):arr(c),cap(c){}
+    void enqueue(const T&e){
+        if(cnt==cap) throw runtime_error("Queue full");
+        arr[tail]=e; tail=(tail+1)%cap; cnt++;
+    }
+    T dequeue(){
+        if(cnt==0) throw runtime_error("Queue empty");
+        T v=arr[head]; head=(head+1)%cap; cnt--; return v;
+    }
+};
+
+int main(){
+    Stack<int> st(3);
+    st.push(1); st.push(2); st.push(3);
+    cout<<"top="<<st.top()<<"\n";
+    cout<<"pop="<<st.pop()<<"\n";
+
+    Queue<string> q(3);
+    q.enqueue("a"); q.enqueue("b"); q.enqueue("c");
+    cout<<"dequeue="<<q.dequeue()<<"\n";
+}
