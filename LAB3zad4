@@ -1,0 +1,68 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+using namespace std;
+
+// Базовый класс транспорт
+class Vehicle {
+protected:
+    string brand, model;
+    int year;
+    double fuelLevel;
+public:
+    Vehicle(string b,string m,int y):brand(b),model(m),year(y),fuelLevel(100){}
+    virtual ~Vehicle()=default;
+
+    virtual void startEngine() = 0;
+    virtual void stopEngine() = 0;
+    virtual void refuel(double amount) = 0;
+
+    virtual void displayInfo() const {
+        cout<<brand<<" "<<model<<" ("<<year<<") Топливо: "<<fuelLevel<<"%\n";
+    }
+
+protected:
+    void clampFuel(){ if(fuelLevel<0)fuelLevel=0; if(fuelLevel>100)fuelLevel=100; }
+};
+
+// Машина
+class Car: public Vehicle {
+    int doors;
+    string transmission;
+    bool running=false;
+public:
+    Car(string b,string m,int y,int d,string tr) : Vehicle(b,m,y),doors(d),transmission(tr){}
+    void startEngine() override{running=true; cout<<"Машина запущена\n";}
+    void stopEngine() override{running=false; cout<<"Машина остановлена\n";}
+    void refuel(double a) override{fuelLevel+=a; clampFuel();}
+    void displayInfo() const override{
+        Vehicle::displayInfo();
+        cout<<"Дверей: "<<doors<<", КПП: "<<transmission<<"\n";
+    }
+};
+
+// Мотоцикл
+class Motorcycle: public Vehicle {
+    bool hasFairing;
+    bool running=false;
+public:
+    Motorcycle(string b,string m,int y,bool f):Vehicle(b,m,y),hasFairing(f){}
+    void startEngine() override{running=true; cout<<"Мотоцикл заведен\n";}
+    void stopEngine() override{running=false; cout<<"Мотоцикл заглушен\n";}
+    void refuel(double a) override{fuelLevel+=a; clampFuel();}
+};
+
+int main(){
+    vector<unique_ptr<Vehicle>> g;
+    g.emplace_back(make_unique<Car>("Toyota","Corolla",2015,4,"AT"));
+    g.emplace_back(make_unique<Motorcycle>("Yamaha","MT-07",2020,true));
+
+    for(auto &v:g){
+        v->displayInfo();
+        v->startEngine();
+        v->refuel(-30);
+        v->displayInfo();
+        v->stopEngine();
+    }
+}
