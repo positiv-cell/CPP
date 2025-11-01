@@ -1,0 +1,72 @@
+#include <iostream>
+#include <string>
+#include <array>
+#include <iomanip>
+using namespace std;
+
+class Student {
+private:
+    string name;
+    int age;
+    array<int, 5> grades{};
+
+public:
+    Student(string n, int a) : name(std::move(n)), age(a) {
+        if (age < 0) age = 0;
+    }
+
+    bool setGrade(size_t index, int value) {
+        if (index >= grades.size()) {
+            cout << "Ошибка: индекс вне диапазона (0..4)\n";
+            return false;
+        }
+        if (!((value >= 2 && value <= 5) || value == 0)) {
+            cout << "Ошибка: оценка должна быть 2..5 (или 0 если нет)\n";
+            return false;
+        }
+        grades[index] = value;
+        return true;
+    }
+
+    double calculateAverage() const {
+        int sum = 0, count = 0;
+        for (int g : grades) {
+            if (g != 0) {
+                sum += g;
+                count++;
+            }
+        }
+        if (count == 0) return 0.0;
+        return static_cast<double>(sum) / count;
+    }
+
+    bool hasScholarship() const {
+        return calculateAverage() >= 4.5;
+    }
+
+    void displayInfo() const {
+        cout << "Студент: " << name << ", возраст: " << age << "\nОценки: ";
+        for (int g : grades) cout << g << " ";
+        cout << "\nСредний балл: " << fixed << setprecision(2) << calculateAverage() << "\n";
+    }
+};
+
+int main() {
+    Student student("Иван Иванов", 20);
+
+    student.setGrade(0, 5);
+    student.setGrade(1, 4);
+    student.setGrade(2, 5);
+    student.setGrade(3, 3);
+    student.setGrade(4, 4);
+
+    student.displayInfo();
+
+    if (student.hasScholarship()) {
+        cout << "✅ Студент получает стипендию!\n";
+    } else {
+        cout << "❌ Стипендия не назначена.\n";
+    }
+
+    return 0;
+}
