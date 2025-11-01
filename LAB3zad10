@@ -1,0 +1,131 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+#include <algorithm>
+using namespace std;
+
+// Базовый член университета
+class UniversityMember {
+protected:
+    string name,id,email;
+public:
+    UniversityMember(string n,string i,string e):name(n),id(i),email(e){}
+    virtual void displayInfo() const = 0;
+    virtual string getRole() const = 0;
+    virtual ~UniversityMember()=default;
+    const string& getId() const{return id;}
+    const string& getName() const{return name;}
+};
+
+// Студент
+class Student: public UniversityMember {
+    string major;
+    int year;
+    double gpa=0;
+    vector<string> courses;
+public:
+    Student(string n,string i,string e,string m,int y)
+     : UniversityMember(n,i,e), major(m), year(y){}
+
+    void enrollCourse(const string& c){
+        if(find(courses.begin(),courses.end(),c)==courses.end())
+            courses.push_back(c);
+    }
+    void setGPA(double v){gpa=v;}
+
+    void displayInfo() const override {
+        cout<<"Студент "<<name<<" ("<<id<<") "<<", Специальность "<<major<<" GPA "<<gpa<<"\n";
+        cout<<"Курсы: ";
+        for(auto &c:courses) cout<<c<<" ";
+        cout<<"\n";
+    }
+    string getRole() const override{return "Student";}
+};
+
+// Преподаватель
+class Professor: public UniversityMember {
+    string department, office;
+    double salary;
+    vector<string> courses;
+public:
+    Professor(string n,string i,string e,string dep,string off,double sal)
+     : UniversityMember(n,i,e), department(dep), office(off), salary(sal){}
+
+    void assignCourse(const string& c){
+        if(find(courses.begin(),courses.end(),c)==courses.end()) courses.push_back(c);
+    }
+
+    void displayInfo() const override {
+        cout<<"Преподаватель "<<name<<" ("<<id<<") "<<", Кафедра "<<department<<"\n";
+        cout<<"Курсы: ";
+        for(auto &c:courses) cout<<c<<" ";
+        cout<<"\n";
+    }
+    string getRole() const override{return "Professor";}
+};
+
+// Курс
+class Course {
+    string code,name;
+    int credits;
+    Professor* teacher=nullptr;
+    vector<Student*> students;
+public:
+    Course(string c,string n,int cr):code(c),name(n),credits(cr){}
+
+    void setInstructor(Professor*p){teacher=p; if(p)p->assignCourse(code);}
+    void addStudent(Student* s){students.push_back(s);}
+    
+    void displayCourseInfo() const {
+        cout<<"Курс "<<code<<" "<<name<<"\n";
+        cout<<"Преподаватель: "<<(teacher?teacher->getName():"нет")<<"\n";
+        cout<<"Студенты: ";
+        for(auto s:students) cout<<s->getName()<<" ";
+        cout<<"\n";
+    }
+};
+
+// Университет
+class University {
+    vector<unique_ptr<UniversityMember>> mem;
+    vector<unique_ptr<Course>> courses;
+public:
+    template<typename T,typename...A>
+    T* addMember(A&&...args){
+        auto p=make_unique<T>(std::forward<A>(args)...);
+        T*r=p.get();
+        mem.push_back(std::move(p));
+        return r;
+    }
+    Course* addCourse(string c,string n,int cr){
+        auto p=make_unique<Course>(c,n,cr);
+        Course*r=p.get();
+        courses.push_back(std::move(p));
+        return r;
+    }
+
+    void displayAll() const {
+        for(const auto& p:mem) p->displayInfo();
+        for(const auto& c:courses) c->displayCourseInfo();
+    }
+};
+
+int main(){
+    University u;
+
+    auto*s1=u.addMember<Student>("Иван","S1","a@mail","CS",2);
+    auto*s2=u.addMember<Student>("Мария","S2","b@mail","Math",1);
+
+    auto*p=u.addMember<Professor>("Смирнов","P1","sm@mail","CS Dept","B201",120000);
+
+    auto*c=u.addCourse("CS101","Прога",6);
+    c->setInstructor(p);
+    c->addStudent(s1);
+    c->addStudent(s2);
+
+    s1->setGPA(4.6);
+    s2->setGPA(4.3);
+
+    u.displayAll();
+}
