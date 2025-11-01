@@ -1,0 +1,79 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
+class Person {
+protected:
+    string name;
+    int age;
+    string address;
+public:
+    Person(string n, int a, string addr) : name(std::move(n)), age(a), address(std::move(addr)) {}
+    virtual void displayInfo() const {
+        cout << "Имя: " << name << ", Возраст: " << age << ", Адрес: " << address << '\n';
+    }
+    virtual ~Person() = default;
+};
+
+class Student : public Person {
+private:
+    string studentId;
+    vector<int> grades;
+public:
+    Student(string n, int a, string addr, string id)
+        : Person(std::move(n), a, std::move(addr)), studentId(std::move(id)) {}
+
+    void addGrade(int g) {
+        if (g >= 2 && g <= 5) grades.push_back(g);
+        else cout << "Некорректная оценка\n";
+    }
+
+    double averageGrade() const {
+        if (grades.empty()) return 0.0;
+        int sum = 0; for (int g : grades) sum += g;
+        return static_cast<double>(sum) / grades.size();
+    }
+
+    void displayInfo() const override {
+        Person::displayInfo();
+        cout << "ID студента: " << studentId
+             << ", Средний балл: " << fixed << setprecision(2) << averageGrade() << '\n';
+    }
+};
+
+class Professor : public Person {
+private:
+    string department;
+    double salary;
+    int yearsOfExperience;
+public:
+    Professor(string n, int a, string addr, string dep, double sal, int y)
+        : Person(std::move(n), a, std::move(addr)), department(std::move(dep)), salary(sal), yearsOfExperience(y) {}
+
+    double allowance() const {
+        double percent = yearsOfExperience * 0.01;
+        if (percent > 0.30) percent = 0.30;
+        return salary * percent;
+    }
+
+    void displayInfo() const override {
+        Person::displayInfo();
+        cout << "Кафедра: " << department
+             << ", Оклад: " << salary
+             << ", Стаж: " << yearsOfExperience
+             << ", Надбавка: " << fixed << setprecision(2) << allowance() << '\n';
+    }
+};
+
+int main() {
+    Student s("Пётр Петров", 20, "ул. Студенческая, 15", "S12345");
+    s.addGrade(5); s.addGrade(4); s.addGrade(5);
+
+    Professor p("Доктор Иванов", 45, "ул. Академическая, 10", "Компьютерные науки", 50000, 15);
+
+    s.displayInfo();
+    p.displayInfo();
+    return 0;
+}
