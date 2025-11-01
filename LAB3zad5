@@ -1,0 +1,89 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Книга
+class Book {
+private:
+    string title, author, isbn;
+    int year;
+    bool isAvailable=true;
+public:
+    Book(string t,string a,string i,int y):title(t),author(a),isbn(i),year(y){}
+
+    const string& getIsbn() const {return isbn;}
+    const string& getTitle() const {return title;}
+    bool available() const{return isAvailable;}
+
+    bool borrow(){
+        if(!isAvailable) return false;
+        isAvailable=false;
+        return true;
+    }
+    bool returnBook(){
+        if(isAvailable) return false;
+        isAvailable=true;
+        return true;
+    }
+
+    void displayInfo() const {
+        cout<<"["<<isbn<<"] "<<title<<" — "<<author<<" ("<<year<<") "
+            <<(isAvailable?"[Доступна]":"[Выдана]")<<"\n";
+    }
+};
+
+// Библиотека
+class Library {
+    string name,address;
+    vector<Book> books;
+public:
+    Library(string n,string addr):name(n),address(addr){}
+
+    void addBook(const Book &b){books.push_back(b);}
+
+    bool removeBook(const string& isbn){
+        for(auto it=books.begin(); it!=books.end(); ++it){
+            if(it->getIsbn()==isbn){books.erase(it); return true;}
+        }
+        return false;
+    }
+
+    vector<const Book*> findBook(const string& t) const {
+        vector<const Book*> result;
+        string key=t; 
+        transform(key.begin(),key.end(),key.begin(),::tolower);
+        for(const auto&b:books){
+            string tt=b.getTitle(); 
+            transform(tt.begin(),tt.end(),tt.begin(),::tolower);
+            if(tt.find(key)!=string::npos) result.push_back(&b);
+        }
+        return result;
+    }
+
+    bool borrowBook(const string& isbn){
+        for(auto &b:books) if(b.getIsbn()==isbn) return b.borrow();
+        return false;
+    }
+
+    bool returnBook(const string& isbn){
+        for(auto &b:books) if(b.getIsbn()==isbn) return b.returnBook();
+        return false;
+    }
+
+    void displayAllBooks() const {
+        cout<<"Все книги:\n";
+        for(const auto&b:books) b.displayInfo();
+    }
+};
+
+int main(){
+    Library lib("Городская библиотека","ул. Книжная,1");
+    lib.addBook(Book("Война и мир","Толстой","001",1869));
+    lib.addBook(Book("Мастер и Маргарита","Булгаков","002",1966));
+
+    lib.displayAllBooks();
+    cout<<lib.borrowBook("002")<<"\n";
+    lib.displayAllBooks();
+}
