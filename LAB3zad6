@@ -1,0 +1,61 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Банковский счёт с общими статическими параметрами
+class BankAccount {
+private:
+    string accountNumber, ownerName;
+    double balance;
+    static int totalAccounts;
+    static double totalBankBalance;
+    const double MIN_BALANCE = 10;
+
+public:
+    BankAccount(string acc,string owner,double init):accountNumber(acc),ownerName(owner),balance(init){
+        if(balance<0) balance=0;
+        totalAccounts++;
+        totalBankBalance+=balance;
+    }
+    ~BankAccount(){
+        totalAccounts--;
+        totalBankBalance-=balance;
+    }
+
+    void deposit(double a){
+        if(a>0){balance+=a; totalBankBalance+=a;}
+    }
+    bool withdraw(double a){
+        if(a<=0 || balance-a<MIN_BALANCE) return false;
+        balance-=a; totalBankBalance-=a;
+        return true;
+    }
+
+    void displayAccountInfo() const {
+        cout<<accountNumber<<" — "<<ownerName<<", баланс: "<<balance<<"\n";
+    }
+
+    static int getTotalAccounts(){return totalAccounts;}
+    static double getTotalBankBalance(){return totalBankBalance;}
+    static double getAverageBalance(){
+        return totalAccounts?totalBankBalance/totalAccounts:0;
+    }
+};
+
+int BankAccount::totalAccounts=0;
+double BankAccount::totalBankBalance=0;
+
+int main(){
+    BankAccount a1("001","Иван",1000);
+    BankAccount a2("002","Мария",500);
+
+    a1.deposit(200);
+    a2.withdraw(100);
+
+    a1.displayAccountInfo();
+    a2.displayAccountInfo();
+
+    cout<<BankAccount::getTotalAccounts()<<endl;
+    cout<<BankAccount::getTotalBankBalance()<<endl;
+    cout<<BankAccount::getAverageBalance()<<endl;
+}
