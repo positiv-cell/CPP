@@ -1,0 +1,73 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <memory>
+#include <iomanip>
+using namespace std;
+
+constexpr double PI_CONST = 3.14159265358979323846;
+
+// Абстрактный класс для фигур
+class Shape {
+protected:
+    string color, name;
+public:
+    Shape(string n,string c):name(n),color(c){}
+    virtual ~Shape() = default;
+
+    // Чисто виртуальные функции — каждая фигура считает сама
+    virtual double calculateArea() const = 0;
+    virtual double calculatePerimeter() const = 0;
+    virtual void draw() const = 0;
+
+    void displayInfo() const {
+        cout<<"Фигура: "<<name<<", Цвет: "<<color
+            <<", Площадь: "<<fixed<<setprecision(2)<<calculateArea()
+            <<", Периметр: "<<calculatePerimeter()<<endl;
+    }
+};
+
+// Круг
+class Circle : public Shape {
+    double r;
+public:
+    Circle(string c,double R):Shape("Круг",c),r(R){}
+    double calculateArea() const override { return PI_CONST*r*r; }
+    double calculatePerimeter() const override { return 2*PI_CONST*r; }
+    void draw() const override { cout<<"Рисую круг\n"; }
+};
+
+// Прямоугольник
+class Rectangle: public Shape {
+    double w,h;
+public:
+    Rectangle(string c,double W,double H):Shape("Прямоугольник",c),w(W),h(H){}
+    double calculateArea() const override {return w*h;}
+    double calculatePerimeter() const override {return 2*(w+h);}
+    void draw() const override {cout<<"Рисую прямоугольник\n";}
+};
+
+// Треугольник
+class Triangle: public Shape {
+    double a,b,c;
+public:
+    Triangle(string col,double A,double B,double C):Shape("Треугольник",col),a(A),b(B),c(C){}
+    double calculateArea() const override {
+        double p=(a+b+c)/2;
+        return sqrt(p*(p-a)*(p-b)*(p-c));
+    }
+    double calculatePerimeter() const override {return a+b+c;}
+    void draw() const override {cout<<"Рисую треугольник\n";}
+};
+
+int main(){
+    vector<unique_ptr<Shape>> shapes;
+    shapes.emplace_back(make_unique<Circle>("Красный",5));
+    shapes.emplace_back(make_unique<Rectangle>("Синий",4,6));
+    shapes.emplace_back(make_unique<Triangle>("Зеленый",3,4,5));
+
+    for(auto &s:shapes){
+        s->draw();
+        s->displayInfo();
+    }
+}
