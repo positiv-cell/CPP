@@ -1,0 +1,309 @@
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+struct Client {
+    int id;
+    std::string name;
+    std::string phone;
+};
+
+struct Account {
+    int number;
+    int clientId;
+    double balance;
+    bool active;
+};
+
+struct Operation {
+    int id;
+    int fromAcc;
+    int toAcc;
+    double amount;
+    std::string type;
+};
+
+class BankApp {
+public:
+    void seedDemo() {
+        addClient("Анна Кузнецова", "+7 900 000-00-01");
+        addClient("Илья Новиков", "+7 900 000-00-02");
+        addClient("Мария Волкова", "+7 900 000-00-03");
+        openAccount(1, 15000);
+        openAccount(2, 25000);
+        openAccount(2, 5000);
+        deposit(1, 5000);
+        transfer(2, 1, 2000);
+    }
+
+    void employeeMenu() {
+        bool running = true;
+        while (running) {
+            std::cout << "\n-- Меню сотрудника --\n"
+                      << "1. Добавить клиента\n"
+                      << "2. Список клиентов\n"
+                      << "3. Открыть счёт\n"
+                      << "4. Закрыть счёт\n"
+                      << "5. Все счета\n"
+                      << "6. Операции\n"
+                      << "0. Выход\n"
+                      << "Ваш выбор: ";
+            int choice = readInt();
+            switch (choice) {
+                case 1: addClientFlow(); break;
+                case 2: listClients(); break;
+                case 3: openAccountFlow(); break;
+                case 4: closeAccountFlow(); break;
+                case 5: listAccounts(); break;
+                case 6: listOperations(); break;
+                case 0: running = false; break;
+                default: std::cout << "Неверный выбор\n"; break;
+            }
+        }
+    }
+
+    void clientMenu(int clientId) {
+        bool running = true;
+        while (running) {
+            std::cout << "\n-- Кабинет клиента --\n"
+                      << "1. Мои данные\n"
+                      << "2. Мои счета\n"
+                      << "3. Пополнить счёт\n"
+                      << "4. Снять со счёта\n"
+                      << "5. Перевод с моего счёта\n"
+                      << "6. Мои операции\n"
+                      << "0. Выход\n"
+                      << "Ваш выбор: ";
+            int choice = readInt();
+            switch (choice) {
+                case 1: showClient(clientId); break;
+                case 2: listClientAccounts(clientId); break;
+                case 3: depositFlow(clientId); break;
+                case 4: withdrawFlow(clientId); break;
+                case 5: transferFlow(clientId); break;
+                case 6: listClientOperations(clientId); break;
+                case 0: running = false; break;
+                default: std::cout << "Неверный выбор\n"; break;
+            }
+        }
+    }
+
+    static int readInt() {
+        int v;
+        while (!(std::cin >> v)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Введите число: ";
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        return v;
+    }
+
+    static double readDouble() {
+        double v;
+        while (!(std::cin >> v)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Введите число: ";
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        return v;
+    }
+
+private:
+    std::vector<Client> clients;
+    std::vector<Account> accounts;
+    std::vector<Operation> ops;
+    int nextClientId = 1;
+    int nextAccountNum = 1;
+    int nextOpId = 1;
+
+    void addClient(const std::string& name, const std::string& phone) {
+        clients.push_back(Client{nextClientId++, name, phone});
+    }
+
+    void addClientFlow() {
+        std::string name, phone;
+        std::cout << "Имя: ";
+        std::getline(std::cin, name);
+        std::cout << "Телефон: ";
+        std::getline(std::cin, phone);
+        addClient(name, phone);
+        std::cout << "Клиент добавлен, ID=" << (nextClientId - 1) << "\n";
+    }
+
+    void openAccount(int clientId, double initial) {
+        accounts.push_back(Account{nextAccountNum++, clientId, initial, true});
+    }
+
+    void openAccountFlow() {
+        std::cout << "ID клиента: ";
+        int id = readInt();
+        if (!hasClient(id)) { std::cout << "Клиент не найден\n"; return; }
+        std::cout << "Начальный баланс: ";
+        double bal = readDouble();
+        openAccount(id, bal);
+        std::cout << "Счёт открыт, номер " << (nextAccountNum - 1) << "\n";
+    }
+
+    void closeAccountFlow() {
+        std::cout << "Номер счёта: ";
+        int acc = readInt();
+        auto it = findAccount(acc);
+        if (it == accounts.end() || !it->active) { std::cout << "Счёт не найден/закрыт\n"; return; }
+        if (it->balance != 0.0) { std::cout << "Баланс не ноль, закройте позже\n"; return; }
+        it->active = false;
+        std::cout << "Счёт закрыт\n";
+    }
+
+    void depositFlow(int clientId) {
+        std::cout << "Номер счёта: ";
+        int acc = readInt();
+        if (!ownsAccount(clientId, acc)) { std::cout << "Это не ваш счёт\n"; return; }
+        std::cout << "Сумма: ";
+        double amt = readDouble();
+        deposit(acc, amt);
+    }
+
+    void withdrawFlow(int clientId) {
+        std::cout << "Номер счёта: ";
+        int acc = readInt();
+        if (!ownsAccount(clientId, acc)) { std::cout << "Это не ваш счёт\n"; return; }
+        std::cout << "Сумма: ";
+        double amt = readDouble();
+        withdraw(acc, amt);
+    }
+
+    void transferFlow(int clientId) {
+        std::cout << "С моего счёта №: ";
+        int from = readInt();
+        if (!ownsAccount(clientId, from)) { std::cout << "Это не ваш счёт\n"; return; }
+        std::cout << "На счёт №: ";
+        int to = readInt();
+        std::cout << "Сумма: ";
+        double amt = readDouble();
+        transfer(from, to, amt);
+    }
+
+    void deposit(int acc, double amt) {
+        auto it = findAccount(acc);
+        if (it == accounts.end() || !it->active) { std::cout << "Счёт не найден\n"; return; }
+        it->balance += amt;
+        ops.push_back(Operation{nextOpId++, acc, acc, amt, "deposit"});
+        std::cout << "Готово\n";
+    }
+
+    void withdraw(int acc, double amt) {
+        auto it = findAccount(acc);
+        if (it == accounts.end() || !it->active) { std::cout << "Счёт не найден\n"; return; }
+        if (it->balance < amt) { std::cout << "Недостаточно средств\n"; return; }
+        it->balance -= amt;
+        ops.push_back(Operation{nextOpId++, acc, acc, amt, "withdraw"});
+        std::cout << "Готово\n";
+    }
+
+    void transfer(int from, int to, double amt) {
+        auto a = findAccount(from);
+        auto b = findAccount(to);
+        if (a == accounts.end() || b == accounts.end() || !a->active || !b->active) {
+            std::cout << "Счёт не найден\n"; return;
+        }
+        if (a->balance < amt) { std::cout << "Недостаточно средств\n"; return; }
+        a->balance -= amt;
+        b->balance += amt;
+        ops.push_back(Operation{nextOpId++, from, to, amt, "transfer"});
+        std::cout << "Перевод выполнен\n";
+    }
+
+    void listClients() const {
+        std::cout << "\nКлиенты:\n";
+        for (const auto& c : clients) {
+            std::cout << c.id << ": " << c.name << " (" << c.phone << ")\n";
+        }
+    }
+
+    void showClient(int id) const {
+        for (const auto& c : clients) {
+            if (c.id == id) {
+                std::cout << "ID: " << c.id << "\nИмя: " << c.name << "\nТелефон: " << c.phone << "\n";
+                return;
+            }
+        }
+        std::cout << "Клиент не найден\n";
+    }
+
+    void listAccounts() const {
+        std::cout << "\nСчета:\n";
+        for (const auto& a : accounts) {
+            std::cout << "№" << a.number << " (клиент " << a.clientId << "), баланс=" << a.balance
+                      << (a.active ? " [актив]" : " [закрыт]") << "\n";
+        }
+    }
+
+    void listClientAccounts(int clientId) const {
+        std::cout << "\nВаши счета:\n";
+        for (const auto& a : accounts) {
+            if (a.clientId == clientId) {
+                std::cout << "№" << a.number << ", баланс=" << a.balance
+                          << (a.active ? " [актив]" : " [закрыт]") << "\n";
+            }
+        }
+    }
+
+    void listOperations() const {
+        std::cout << "\nОперации:\n";
+        for (const auto& o : ops) {
+            std::cout << "#" << o.id << " " << o.type << " " << o.amount
+                      << " (от " << o.fromAcc << " к " << o.toAcc << ")\n";
+        }
+    }
+
+    void listClientOperations(int clientId) const {
+        std::unordered_map<int, bool> mine;
+        for (const auto& a : accounts) if (a.clientId == clientId) mine[a.number] = true;
+        std::cout << "\nВаши операции:\n";
+        for (const auto& o : ops) {
+            if (mine.count(o.fromAcc) || mine.count(o.toAcc)) {
+                std::cout << "#" << o.id << " " << o.type << " " << o.amount
+                          << " (от " << o.fromAcc << " к " << o.toAcc << ")\n";
+            }
+        }
+    }
+
+    bool hasClient(int id) const {
+        return std::any_of(clients.begin(), clients.end(), [id](const Client& c) { return c.id == id; });
+    }
+
+    std::vector<Account>::iterator findAccount(int acc) {
+        return std::find_if(accounts.begin(), accounts.end(), [acc](const Account& a) { return a.number == acc; });
+    }
+
+    bool ownsAccount(int clientId, int acc) const {
+        return std::any_of(accounts.begin(), accounts.end(),
+                           [clientId, acc](const Account& a) { return a.clientId == clientId && a.number == acc && a.active; });
+    }
+};
+
+int main() {
+    BankApp app;
+    app.seedDemo();
+    while (true) {
+        std::cout << "\n=== БАНК Илья ===\n1. Войти как сотрудник\n2. Войти как клиент\n0. Выход\nВыбор: ";
+        int role = BankApp::readInt();
+        if (role == 1) {
+            app.employeeMenu();
+        } else if (role == 2) {
+            std::cout << "ID клиента: ";
+            int cid = BankApp::readInt();
+            app.clientMenu(cid);
+        } else if (role == 0) {
+            break;
+        } else {
+            std::cout << "Неверный выбор\n";
+        }
+    }
+    return 0;
+}
