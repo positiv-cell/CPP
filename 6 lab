@@ -1,0 +1,206 @@
+#include <sqlite3.h>
+
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+class Statement {
+public:
+    Statement(sqlite3* db, const std::string& sql) : stmt(nullptr) {
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            throw std::runtime_error("Prepare failed: " + std::string(sqlite3_errmsg(db)));
+        }
+    }
+    ~Statement() { sqlite3_finalize(stmt); }
+    sqlite3_stmt* get() { return stmt; }
+    void reset() { sqlite3_reset(stmt); }
+
+private:
+    sqlite3_stmt* stmt;
+};
+
+bool exec(sqlite3* db, const std::string& sql) {
+    char* err = nullptr;
+    int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &err);
+    if (rc != SQLITE_OK) {
+        std::cerr << "SQL error: " << (err ? err : "unknown") << "\n";
+        sqlite3_free(err);
+        return false;
+    }
+    return true;
+}
+
+void initSchema(sqlite3* db) {
+    exec(db, "PRAGMA foreign_keys = ON;");
+    exec(db, "DROP TABLE IF EXISTS tickets;");
+    exec(db, "DROP TABLE IF EXISTS customers;");
+    exec(db, "DROP TABLE IF EXISTS movies;");
+
+    exec(db, "CREATE TABLE movies ("
+             " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+             " title TEXT NOT NULL,"
+             " seats_total INTEGER NOT NULL,"
+             " seats_available INTEGER NOT NULL"
+             ");");
+    exec(db, "CREATE TABLE customers ("
+             " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+             " name TEXT NOT NULL,"
+             " email TEXT NOT NULL UNIQUE"
+             ");");
+    exec(db, "CREATE TABLE tickets ("
+             " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+             " movie_id INTEGER NOT NULL,"
+             " customer_id INTEGER NOT NULL,"
+             " price REAL NOT NULL,"
+             " created_at TEXT NOT NULL DEFAULT (datetime('now')),"
+             " FOREIGN KEY(movie_id) REFERENCES movies(id),"
+             " FOREIGN KEY(customer_id) REFERENCES customers(id)"
+             ");");
+}
+
+void seed(sqlite3* db) {
+    Statement insMovie(db, "INSERT INTO movies(title, seats_total, seats_available) VALUES (?, ?, ?);");
+    std::vector<std::tuple<std::string, int>> movies = {
+        {"Интерстеллар", 50},
+        {"Начало", 40},
+        {"Дюна", 60}};
+    for (auto& [title, seats] : movies) {
+        insMovie.reset();
+        sqlite3_bind_text(insMovie.get(), 1, title.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(insMovie.get(), 2, seats);
+        sqlite3_bind_int(insMovie.get(), 3, seats);
+        sqlite3_step(insMovie.get());
+    }
+
+    Statement insCustomer(db, "INSERT INTO customers(name, email) VALUES (?, ?);");
+    std::vector<std::pair<std::string, std::string>> customers = {
+        {"Илья Соколов", "ilya@example.com"},
+        {"Анна Петрова", "anna@example.com"},
+        {"Олег Миронов", "oleg@example.com"}};
+    for (auto& [name, email] : customers) {
+        insCustomer.reset();
+        sqlite3_bind_text(insCustomer.get(), 1, name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(insCustomer.get(), 2, email.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_step(insCustomer.get());
+    }
+}
+
+void showMovies(sqlite3* db) {
+    Statement stmt(db, "SELECT id, title, seats_available, seats_total FROM movies ORDER BY id;");
+    std::cout << "\n=== Фильмы ===\n";
+    while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt.get(), 0);
+        std::string title(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 1)));
+        int avail = sqlite3_column_int(stmt.get(), 2);
+        int total = sqlite3_column_int(stmt.get(), 3);
+        std::cout << id << ". " << title << " (мест: " << avail << "/" << total << ")\n";
+    }
+}
+
+void showCustomers(sqlite3* db) {
+    Statement stmt(db, "SELECT id, name, email FROM customers ORDER BY id;");
+    std::cout << "\n=== Покупатели ===\n";
+    while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt.get(), 0);
+        std::string name(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 1)));
+        std::string email(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 2)));
+        std::cout << id << ". " << name << " <" << email << ">\n";
+    }
+}
+
+bool buyTicket(sqlite3* db, int movieId, int customerId, double price) {
+    if (!exec(db, "BEGIN;")) return false;
+    Statement check(db, "SELECT seats_available FROM movies WHERE id = ?;");
+    sqlite3_bind_int(check.get(), 1, movieId);
+    int rc = sqlite3_step(check.get());
+    if (rc != SQLITE_ROW) {
+        std::cerr << "Фильм не найден\n";
+        exec(db, "ROLLBACK;");
+        return false;
+    }
+    int seats = sqlite3_column_int(check.get(), 0);
+    if (seats <= 0) {
+        std::cerr << "Нет мест\n";
+        exec(db, "ROLLBACK;");
+        return false;
+    }
+
+    Statement insTicket(db, "INSERT INTO tickets(movie_id, customer_id, price) VALUES (?, ?, ?);");
+    sqlite3_bind_int(insTicket.get(), 1, movieId);
+    sqlite3_bind_int(insTicket.get(), 2, customerId);
+    sqlite3_bind_double(insTicket.get(), 3, price);
+    if (sqlite3_step(insTicket.get()) != SQLITE_DONE) {
+        std::cerr << "Ошибка покупки\n";
+        exec(db, "ROLLBACK;");
+        return false;
+    }
+
+    Statement upd(db, "UPDATE movies SET seats_available = seats_available - 1 WHERE id = ?;");
+    sqlite3_bind_int(upd.get(), 1, movieId);
+    if (sqlite3_step(upd.get()) != SQLITE_DONE) {
+        std::cerr << "Ошибка обновления мест\n";
+        exec(db, "ROLLBACK;");
+        return false;
+    }
+    exec(db, "COMMIT;");
+    return true;
+}
+
+void showTickets(sqlite3* db) {
+    const char* sql =
+        "SELECT tickets.id, movies.title, customers.name, tickets.price, tickets.created_at "
+        "FROM tickets "
+        "JOIN movies ON movies.id = tickets.movie_id "
+        "JOIN customers ON customers.id = tickets.customer_id;";
+    Statement stmt(db, sql);
+    std::cout << "\n=== Проданные билеты ===\n";
+    while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt.get(), 0);
+        std::string title(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 1)));
+        std::string customer(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 2)));
+        double price = sqlite3_column_double(stmt.get(), 3);
+        std::string ts(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 4)));
+        std::cout << "#" << id << " \"" << title << "\" → " << customer << " (" << price << " руб, " << ts << ")\n";
+    }
+}
+
+void showRevenue(sqlite3* db) {
+    const char* sql =
+        "SELECT movies.title, COUNT(tickets.id), IFNULL(SUM(tickets.price),0) "
+        "FROM movies LEFT JOIN tickets ON tickets.movie_id = movies.id "
+        "GROUP BY movies.id;";
+    Statement stmt(db, sql);
+    std::cout << "\n=== Продажи по фильмам ===\n";
+    while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
+        std::string title(reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 0)));
+        int count = sqlite3_column_int(stmt.get(), 1);
+        double sum = sqlite3_column_double(stmt.get(), 2);
+        std::cout << title << ": билетов " << count << ", выручка " << sum << "\n";
+    }
+}
+
+int main() {
+    std::cout << "===  Илья: кинотеатр ===\n";
+    sqlite3* db = nullptr;
+    if (sqlite3_open("ilya_cinema.db", &db) != SQLITE_OK) {
+        std::cerr << "Не открыть БД: " << sqlite3_errmsg(db) << "\n";
+        return 1;
+    }
+    initSchema(db);
+    seed(db);
+    showMovies(db);
+    showCustomers(db);
+
+    std::cout << "\nПробуем продать билеты...\n";
+    buyTicket(db, 1, 1, 450);
+    buyTicket(db, 1, 2, 450);
+    buyTicket(db, 2, 3, 400);
+
+    showMovies(db);
+    showTickets(db);
+    showRevenue(db);
+
+    sqlite3_close(db);
+    return 0;
+}
